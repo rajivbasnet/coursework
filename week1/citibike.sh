@@ -29,7 +29,8 @@ cut -d, -f12 201402-citibike-tripdata.csv | sort | uniq -c | sort -n | tail -n1
 
 # count the number of rides by gender and birth year
 
-cut -d, -f14,15 201402-citibike-tripdata.csv | sort -n | uniq -c
+#cut -d, -f14,15 201402-citibike-tripdata.csv | sort -n | uniq -c
+echo 'Count by Gender' &&  awk -F, ' {counts[$15]++} END {for (k in counts) print counts[k]"\t" k }' 201402-citibike-tripdata.csv && echo 'Count by Birth Year' && awk -F, ' {counts[$14]++} END {for (k in counts) print counts[k]"\t" k }' 201402-citibike-tripdata.csv
 
 # count the number of trips that start on cross streets that both contain numbers (e.g., "1 Ave & E 15 St", "E 39 St & 2 Ave", ...)
 
