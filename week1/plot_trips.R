@@ -69,16 +69,16 @@ trips %>%
     
 
 # plot the ratio of male to female trips (on the y axis) by age (on the x axis)
-# hint: use the spread() function to reshape things to make it easier to compute this ratio
+# hint: use the spread()(pivot_wider()) function to reshape things to make it easier to compute this ratio
 # (you can skip this and come back to it tomorrow if we haven't covered spread() yet)
 
 trips %>% 
   mutate(age = year(ymd) - birth_year) %>%
   group_by(age, gender) %>%
   summarize(count = n()) %>%
-  spread(gender, count) %>%
+  pivot_wider(names_from = gender, values_from = count) %>%
   ggplot(aes(x = age, y = Male/Female)) +
-    geom_point() + 
+    geom_point() +
     scale_y_continuous(labels = comma)
 
 
@@ -92,12 +92,12 @@ weather %>%
     geom_line(color = 'red')
 
 # plot the minimum temperature and maximum temperature (on the y axis, with different colors) over each day (on the x axis)
-# hint: try using the gather() function for this to reshape things before plotting
+# hint: try using the gather() (pivot_longer())function for this to reshape things before plotting
 # (you can skip this and come back to it tomorrow if we haven't covered gather() yet)
 
 weather %>% 
-  gather("temperature", "temp_value", c(5:6)) %>%
-  ggplot(aes(x = ymd, y = temp_value, color = temperature)) +
+  pivot_longer(c(tmax, tmin), names_to = "temp_ind", values_to = "temp_value") %>%
+  ggplot(aes(x = ymd, y = temp_value, color = temp_ind)) +
   geom_line()
 
 
