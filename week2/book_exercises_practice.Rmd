@@ -1,0 +1,104 @@
+---
+title: "book_exercise_day1"
+output: html_document
+---
+
+From  Introduction to Statistical Thinking (With R, Without Calculus) http://pluto.huji.ac.il/~msby/StatThink/
+
+```{r}
+library(tidyverse)
+#Expected Value
+Y.val <- c(0,1,2,3,4,5)
+P.val <- c(1,2,3,4,5,6)/21
+E <- sum(Y.val*P.val)
+E
+```
+```{r}
+#Variance
+Var <- sum((Y.val-E)^2*P.val)
+Var
+```
+
+```{r}
+#Normal Distribution
+1 - pnorm(650,560,57)
+qnorm(0.1,630,61)
+1 - pbinom(11,27,0.32)
+```
+
+```{r}
+pop2 = read.csv("pop2.csv")
+head(pop2)
+```
+
+```{r}
+mean(pop2$bmi) 
+sd(pop2$bmi)
+```
+```{r}
+X_bar <- rep(0,10^5)
+for (i in 1:10^5) {
+  X_sample <- sample(pop2$bmi, 150)
+  X_bar[i] <- mean(X_sample)
+}
+mean(X_bar)
+sd(X_bar)
+```
+
+```{r}
+quantile(X_bar, c(0.1, 0.9))
+```
+```{r}
+qnorm(c(0.1,0.9),mean(X_bar),sd(X_bar))
+```
+
+
+```{r}
+
+# EX - 10.1
+
+mu = 3
+sig = sqrt(2)
+X.bar <- rep(0,10^5)
+X.med <- rep(0,10^5)
+
+for(i in 1:10^5)
+{
+  X <- rnorm(100,mu,sig)
+  X.bar[i] <- mean(X)
+  X.med[i] <- median(X)
+}
+
+ggplot(data.frame(X.bar), aes(x = X.bar)) +
+  geom_histogram(binwidth = 0.01, fill = "red", alpha=0.5) +
+  geom_vline(xintercept=mean(X.bar))
+
+ggplot(data.frame(X.med), aes(x = X.med)) +
+  geom_histogram(binwidth = 0.01, fill = "blue", alpha=0.5) + 
+  geom_vline(xintercept=mean(X.med))
+  
+var(X.bar)
+var(X.med)
+```
+
+```{r}
+# EX - 10.2
+pop2 <- read.csv("pop2.csv")
+ex2 <- read.csv("ex2.csv")
+
+mean(ex2$group == "HIGH")
+mean(pop2$group == "HIGH")
+
+p_bar <- rep(0, 10^5)
+for (i in 1:10^5) {
+  x <- sample(pop2$group, 150)
+  p_bar[i] <- mean(x == "HIGH")
+}
+mean(p_bar)
+
+var(p_bar)
+
+p_prob_high <-
+
+```
+
