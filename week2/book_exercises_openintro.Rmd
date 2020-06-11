@@ -1,0 +1,68 @@
+---
+title: "book_exercise_openintro"
+output: html_document
+---
+
+```{r}
+# 2.9 Exercises from ISRS- Book (https://www.openintro.org/book/isrs/)
+
+heart_trans <- tribble(
+  ~outome,  ~control,  ~treatment,
+  #--------|--------|----------|
+  "Alive",   4,       24,         
+  "Dead",   30,       45,         
+)
+heart_trans <- heart_trans %>% mutate( total = control + treatment) %>% bind_rows(summarise_all(., funs(if(is.numeric(.)) sum(.) else "Total")))
+
+# heart_trans_prop <- heart_trans %>% mutate( control = control/total, treatment = treatment/total, total = 1)
+# 
+# heart_trans_prop
+
+heart_trans
+
+# What proportion of patients in the treatment group and what proportion of patients in the control group died?
+30/34 - 45/69
+
+# diff = 23%
+
+
+# H0 =  heart transplant has no effect on weather the person would be alive or dead
+
+# H1 = Effective
+
+#Observing the simulations, there is only 2% probability that the more than 23% people died in control group than the treatment group by chance alone.
+#Thus, the null hypothesis can be rejected.
+
+
+```
+```{r}
+cdv <- tribble(
+  ~drug,  ~yes,  ~no,
+  #--------|--------|----------|
+  "Rosiglitazone",   2593,       65000,         
+  "Pioglitazone",   5386,       154592,       
+)
+
+cdv <- cdv %>% mutate( total = yes + no) %>% bind_rows(summarise_all(., funs(if(is.numeric(.)) sum(.) else "Total")))
+cdv
+
+#a) 
+7979/227571
+
+#b)
+67593 * (7979/227571)
+
+#c) 
+#i)
+# Whether Rosiglitazone increases the risk of cvd in based on the data.
+
+#ii) fewer patients supports null hypothesis and more patients supports the alternate hypothesis.
+
+#iii) 
+
+# H0 = Taking rosiglitazone does not effect the risk of cvd
+#Under the null hypothesis, the probability that taking rosiglitazone increases risks of cvd is high. Thus, we reject the null hypothesis.
+
+```
+
+
