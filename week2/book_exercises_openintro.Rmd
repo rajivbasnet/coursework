@@ -54,7 +54,7 @@ cdv
 
 #c) 
 #i)
-# Whether Rosiglitazone increases the risk of cvd in based on the data.
+# Whether this proportion of effect of Rosiglitazone is due to chance.
 
 #ii) fewer patients supports null hypothesis and more patients supports the alternate hypothesis.
 
