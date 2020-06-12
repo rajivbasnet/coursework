@@ -55,13 +55,14 @@ cdv
 #c) 
 #i)
 # Whether this proportion of effect of Rosiglitazone is due to chance.
+# OR weather cvd is independent of using Rosiglitazone
 
 #ii) fewer patients supports null hypothesis and more patients supports the alternate hypothesis.
 
 #iii) 
 
 # H0 = Taking rosiglitazone does not effect the risk of cvd
-#Under the null hypothesis, the probability that taking rosiglitazone increases risks of cvd is high. Thus, we reject the null hypothesis.
+#Under the null hypothesis, the probability that taking rosiglitazone increases risks of cvd is high. Thus, we reject the null hypothesis. 
 
 ```
 
