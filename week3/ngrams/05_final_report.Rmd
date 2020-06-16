@@ -50,12 +50,26 @@ Load in the `year_counts.tsv` and `total_counts.csv` files. Use the `here()` fun
 
 ```{r load-counts}
 
+year_counts <- read_tsv(here("year_counts.tsv"), col_names = c("term", "year", "volume", "book_count"))
+
+head(year_counts)
+
+total_counts <- read_csv(here("total_counts.csv"), col_names = c("year", "total_volume", "page_count", "book_count"))
+
+head(total_counts)
 
 ```
 
 ## Your written answer
 
 Add a line below using Rmarkdown's inline syntax to print the total number of lines in each dataframe you've created.
+```{r}
+
+print(nrow(year_counts))
+print(nrow(total_counts))
+
+```
+
 
 # Part B
 
@@ -67,7 +81,10 @@ Join the raw year term counts with the total counts and divide to get a proporti
 
 ```{r join-years-and-totals}
 
-
+years_and_totals <- left_join(year_counts, total_counts, by = "year") %>%
+  mutate(proportion = volume/total_volume )
+  
+head(years_and_totals)
 ```
 
 ## Plot the main figure 3a
@@ -76,6 +93,16 @@ Plot the proportion of mentions for the terms "1883", "1910", and "1950" over ti
 
 ```{r plot-proportion-over-time}
 
+years_and_totals %>%
+  filter(term == 1883 | term == 1910 | term == 1950) %>%
+  filter(year >= 1850) %>%
+  mutate(term = as.factor(term)) %>%
+  ggplot(aes(x = year, y = proportion, color = term)) +
+  geom_line() +
+  scale_y_continuous(label = percent) +
+  coord_cartesian(xlim = c(1850, 2012)) +
+  labs(x = "Year", y = "Frequency")
+  
 ```
 
 ## Your written answer
@@ -94,6 +121,7 @@ Go to the ngram viewer, enter the terms "1883", "1910", and "1950" and take a sc
 
 Add your screenshot for Part C below this line using the `![](figure_filename.png)` syntax and comment on similarities / differences.
 
+![](ngram_view.png)
 
 # Part D
 
@@ -104,6 +132,15 @@ Add your screenshot for Part C below this line using the `![](figure_filename.pn
 Plot the raw counts for the terms "1883", "1910", and "1950" over time from 1850 to 2012. Use the `comma` function from the `scales` package for a readable y axis. The colors for each term should match your last plot, and it's nice if these match the original paper but not strictly necessary.
 
 ```{r plot-raw-mentions-over-time}
+years_and_totals %>%
+  filter(term == 1883 | term == 1910 | term == 1950) %>%
+  filter(year >= 1850) %>%
+  mutate(term = as.factor(term)) %>%
+  ggplot(aes(x = year, y = volume, color = term)) +
+  geom_line() +
+  scale_y_continuous(label = comma) +
+  coord_cartesian(xlim = c(1850, 2012)) +
+  labs(x = "Year", y = "Volume")
 
 ```
 
@@ -118,6 +155,15 @@ As part of answering this question, make an additional plot.
 Plot the total counts for each year over time, from 1850 to 2012. Use the `comma` function from the `scales` package for a readable y axis. There should be only one line on this plot (not three).
 
 ```{r plot-totals}
+
+years_and_totals %>% 
+  filter(year >= 1850) %>%
+  group_by(year) %>%
+  summarise(total_counts = sum(total_volume)) %>%
+  ggplot(aes(x = year, y = total_counts)) +
+  geom_line() +
+  scale_y_continuous(label = comma) +
+  labs(x = "Year", y = "Total Count")
 
 ```
 
@@ -135,6 +181,23 @@ For each year term, find the year where its proportion of mentions peaks (hits i
 
 ```{r compute-peaks}
 
+# int_yt_df <- years_and_totals %>%
+#   filter(year >= 1850) %>%
+#   group_by(term) %>%
+#   summarize(peak_value = max(proportion), half_of_peak_value = max(proportion)/2) %>%
+#   ungroup() %>%
+#   filter(peak_value == proportion) %>%
+#   group_by(term)
+
+peak_year_df <- years_and_totals %>%
+  filter(year >= 1850) %>%
+  group_by(term) %>%
+  filter(proportion == max(proportion)) %>%
+  select(term, year, proportion) %>%
+  rename(peak_value = proportion, peak_year = year)
+
+head(peak_year_df)
+
 ```
 
 ## Compute half-lifes
@@ -143,15 +206,37 @@ Now, for each year term, find the minimum number of years it takes for the propo
 
 ```{r compute-half-lifes}
 
+half_life_df <- years_and_totals %>%
+  filter(year >= 1850) %>%
+  group_by(term) %>%
+  filter(proportion <= max(proportion) * 0.5) %>%
+  filter(proportion == max(proportion)) %>%
+  select(term, year, proportion) %>%
+  rename(half_life_value = proportion, half_life_year = year)
+
+head(half_life_df)
+
+final_df <- left_join(peak_year_df, half_life_df, by = "term")
+
+head(final_df)
+
 ```
 
 ## Plot the inset of figure 3a
 
 Plot the half-life of each term over time from 1850 to 2012. Each point should represent one year term, and add a line to show the trend using `geom_smooth()`.
 
-
 ```{r plot-half-lifes}
 
+final_df %>% 
+  filter(term >= 1850) %>%
+  mutate(diff = half_life_year - peak_year) %>%
+  ggplot(aes(x = term, y = diff)) + 
+  geom_point(color = "grey") +
+  geom_smooth(aes(x = term, y = diff)) +
+  labs(x = "Year", y = "Half-Life (years)")
+  
+  
 ```
 
 ## Your written answer
