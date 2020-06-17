@@ -1,8 +1,12 @@
 ---
 title: "MSD Homework 2, Problem 3"
 author: "Your Name (your uni)"
-date: '`r Sys.time()`'
+date: "`r Sys.time()`"
 output:
+  html_document:
+    toc: yes
+    toc_depth: '3'
+    df_print: paged
   pdf_document:
     toc: yes
     toc_depth: 3
@@ -171,6 +175,10 @@ years_and_totals %>%
 
 Write up your answer to Part E here.
 
+=> The difference between graph (b) and graph (b) is because of the growth in number of digitized books.
+In and after 1883, 1910 and 1950 these particular words were used at a high extent. The fraction
+dropped however, the volume of words rised again with the evolution of digital world and republication of the books containing those words.
+
 # Part F
 
 > Now, using the proportion of mentions, replicate the inset of figure 3a. That is, for each year between 1875 and 1975, calculate the half-life of that year. The half-life is defined to be the number of years that pass before the proportion of mentions reaches half its peak value. Note that Michel et al. (2011) do something more complicated to estimate the half-life—see section III.6 of the Supporting Online Information—but they claim that both approaches produce similar results. Does version 2 of the NGram data produce similar results to those presented in Michel et al. (2011), which are based on version 1 data? (Hint: Don’t be surprised if it doesn’t.)
@@ -209,14 +217,16 @@ Now, for each year term, find the minimum number of years it takes for the propo
 half_life_df <- years_and_totals %>%
   filter(year >= 1850) %>%
   group_by(term) %>%
-  filter(proportion <= max(proportion) * 0.5) %>%
+  filter(proportion < max(proportion) * 0.5) %>%
+  group_by(term) %>%
   filter(proportion == max(proportion)) %>%
   select(term, year, proportion) %>%
   rename(half_life_value = proportion, half_life_year = year)
 
 head(half_life_df)
 
-final_df <- left_join(peak_year_df, half_life_df, by = "term")
+final_df <- left_join(peak_year_df, half_life_df, by = "term") %>% 
+  mutate(diff = half_life_year - peak_year)
 
 head(final_df)
 
@@ -228,14 +238,15 @@ Plot the half-life of each term over time from 1850 to 2012. Each point should r
 
 ```{r plot-half-lifes}
 
+highlight_points <- final_df %>% filter(term == 1883 | term == 1910 | term == 1950)
+  
 final_df %>% 
   filter(term >= 1850) %>%
-  mutate(diff = half_life_year - peak_year) %>%
   ggplot(aes(x = term, y = diff)) + 
-  geom_point(color = "grey") +
+  geom_point(color = "gray") +
+  geom_point(data = highlight_points, aes(x = term, y = diff), color = "red") + 
   geom_smooth(aes(x = term, y = diff)) +
   labs(x = "Year", y = "Half-Life (years)")
-  
   
 ```
 
@@ -250,6 +261,46 @@ Write up your answer to Part F here.
 ## Your written answer
 
 Write up your answer to Part G here. Include code that shows the years with the smallest and largest half-lifes.
+
+```{r}
+sorted_by_half_life <- final_df %>% 
+  filter(term >= 1850) %>%
+  mutate(diff = half_life_year - peak_year) %>%
+  arrange(diff)
+
+tail(sorted_by_half_life)
+head(sorted_by_half_life)
+
+
+```
+
+=> Greatest Half Life: 
+1850: Crimean War
+1860 - 1863 : American Civil War
+
+=> It appears that the terms "1997", "1965" and "1957" have negative number of years to decline from
+peak proportion to half life proportion. 
+
+1997:
+1965:
+1957: 
+
+
+```{r}
+#visualization of proportions for the outliers
+
+years_and_totals %>%
+  filter(term == 1997 | term == 1965 | term == 1957) %>%
+  filter(year >= 1850) %>%
+  mutate(term = as.factor(term)) %>%
+  ggplot(aes(x = year, y = proportion, color = term)) +
+  geom_line() +
+  scale_y_continuous(label = percent) +
+  coord_cartesian(xlim = c(1900, 2012)) +
+  labs(x = "Year", y = "Frequency")
+
+```
+
 
 # Makefile
 
