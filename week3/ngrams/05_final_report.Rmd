@@ -1,6 +1,6 @@
 ---
 title: "MSD Homework 2, Problem 3"
-author: "Your Name (your uni)"
+author: "Rajiv Basnet (St. Joseph's College)"
 date: "`r Sys.time()`"
 output:
   html_document:
@@ -67,12 +67,9 @@ head(total_counts)
 ## Your written answer
 
 Add a line below using Rmarkdown's inline syntax to print the total number of lines in each dataframe you've created.
-```{r}
 
-print(nrow(year_counts))
-print(nrow(total_counts))
-
-```
+year counts : `r nrow(year_counts)`
+total count: `r nrow(total_counts)`
 
 
 # Part B
@@ -111,7 +108,7 @@ years_and_totals %>%
 
 ## Your written answer
 
-Write up your answer to Part B here.
+=> The results look similar to the one in the paper.
 
 # Part C
 
@@ -126,6 +123,7 @@ Go to the ngram viewer, enter the terms "1883", "1910", and "1950" and take a sc
 Add your screenshot for Part C below this line using the `![](figure_filename.png)` syntax and comment on similarities / differences.
 
 ![](ngram_view.png)
+=> The graphs appear to be similar. 
 
 # Part D
 
@@ -177,7 +175,7 @@ Write up your answer to Part E here.
 
 => The difference between graph (b) and graph (b) is because of the growth in number of digitized books.
 In and after 1883, 1910 and 1950 these particular words were used at a high extent. The fraction
-dropped however, the volume of words rised again with the evolution of digital world and republication of the books containing those words.
+dropped however, the words rised again with the evolution of digital world and republication of the books containing those words.
 
 # Part F
 
@@ -254,6 +252,8 @@ final_df %>%
 
 Write up your answer to Part F here.
 
+=> Version 2 of the dataset does not produce results similar to the paper. The trend is similar. However, the results appear to be more scattered. 
+
 # Part G
 
 > Were there any years that were outliers such as years that were forgotten particularly quickly or particularly slowly? Briefly speculate about possible reasons for that pattern and explain how you identified the outliers.
@@ -274,32 +274,9 @@ head(sorted_by_half_life)
 
 ```
 
-=> Greatest Half Life: 
+=> Outliers with Greatest Half Life: 
 1850: Crimean War
 1860 - 1863 : American Civil War
-
-=> It appears that the terms "1997", "1965" and "1957" have negative number of years to decline from
-peak proportion to half life proportion. 
-
-1997:
-1965:
-1957: 
-
-
-```{r}
-#visualization of proportions for the outliers
-
-years_and_totals %>%
-  filter(term == 1997 | term == 1965 | term == 1957) %>%
-  filter(year >= 1850) %>%
-  mutate(term = as.factor(term)) %>%
-  ggplot(aes(x = year, y = proportion, color = term)) +
-  geom_line() +
-  scale_y_continuous(label = percent) +
-  coord_cartesian(xlim = c(1900, 2012)) +
-  labs(x = "Year", y = "Frequency")
-
-```
 
 
 # Makefile
