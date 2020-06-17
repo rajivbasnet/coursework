@@ -252,7 +252,7 @@ final_df %>%
 
 Write up your answer to Part F here.
 
-=> Version 2 of the dataset does not produce results similar to the paper. The trend is similar. However, the results appear to be more scattered. 
+=> Version 2 of the dataset does not produce results similar to the paper. The trend is similar. However, the results with version 2 appear to be more scattered. 
 
 # Part G
 
