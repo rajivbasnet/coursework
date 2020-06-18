@@ -121,3 +121,28 @@ save(model4, file="model.Rdata")
 
 ```
 
+```{r}
+
+#testing with test data
+
+load("model.Rdata")
+
+rmse_t <- sqrt(mean((predict(model4, trips_test_data) - trips_test_data$num_trips)^2))
+rsq_t <- rsquare(model4, trips_test_data)
+
+rmse_t
+rsq_t
+
+trips_test_data %>%add_predictions(model4) %>%
+  ggplot() + 
+  geom_point(aes(x= pred, y = num_trips), color = "red") +
+  scale_y_continuous(label = comma) +
+  scale_x_continuous(label = comma) + 
+  labs(x = "Predicted Number of Trips", y = "Actual Number of Trips")
+
+
+```
+=> With the validation set, the RMSE was 3704.303 and R-Squared was 0.88.
+With the testing set, the RMSE is 3881.972 and R-squared is 0.86.
+The model fits the testing set significantly and is expected to fit pretty well in other datasets as well.
+However, on looking at the plot with the testing set, the plots seem to be rather scattered. Thus, it can also be expected that the RMSE will be higher and the prediction might as well deviate from the true value by a certain amount.
