@@ -20,32 +20,21 @@ library(lubridate)
 
 trips <- read_tsv("trips_per_day.tsv")
 
-holidays <- read_csv("https://gist.githubusercontent.com/shivaas/4758439/raw/b0d3ddec380af69930d0d67a9e0519c047047ff8/US%2520Bank%2520holidays", col_names = c("holiday_row_num", "ymd", "holiday_name"))
-
-trips <- left_join(trips, holidays, by = "ymd")
+holidays <- read_csv("holidays.csv", col_names = c("holiday_row_num", "ymd", "holiday_name"))
 
 #add is_holiday and is_weekend field
 trips_per_day <- trips %>%
+  left_join(holidays, by = "ymd")%>%
   mutate(is_holiday = (!is.na(holiday_name))) %>%
-  mutate(is_weekend = wday(ymd) == 1 | wday(ymd) == 7) %>%
-  select(-c(holiday_row_num, holiday_name, date))
+  mutate(is_weekend = wday(ymd) == 1 | wday(ymd) == 7)
   
 head(trips_per_day)
 ```
 
 ```{r}
-
-#check relationship of variables with num_trips
-trips_per_day %>% ggplot() + geom_point(aes(x= is_holiday, y = num_trips))
-trips_per_day %>% ggplot() + geom_point(aes(x= is_weekend, y = num_trips))
-trips_per_day %>% ggplot() + geom_point(aes(x= snow, y = num_trips))
-trips_per_day %>% ggplot() + geom_point(aes(x= tmax, y = num_trips))
-trips_per_day %>% ggplot() + geom_point(aes(x= tmin, y = num_trips))
-trips_per_day %>% ggplot() + geom_point(aes(x= prcp, y = num_trips))
-
 #split into train, test and validate
 set.seed(42)
-spec = c(train = .9, test = .1)
+spec = c(train = .8, test = .1, validate = .1)
 
 g = sample(cut(
   seq(nrow(trips_per_day)), 
@@ -57,104 +46,78 @@ trips = split(trips_per_day, g)
 
 trips_train_data <-trips$train
 trips_test_data <-trips$test
+trips_validate_data <- trips$validate
+
 ```
 
 
 ```{r}
+#check relationship of variables with num_trips
+trips_per_day %>% 
+  ggplot(aes(x = prcp + 0.01))+
+  geom_histogram(bins = 10) +
+  scale_x_log10()
 
-#finding out the best model
+                        
+                        
+trips_per_day %>% ggplot() + geom_point(aes(x= is_weekend, y = num_trips))
+trips_per_day %>% ggplot() + geom_point(aes(x= snow, y = num_trips))
+trips_per_day %>% ggplot() + geom_point(aes(x= tmax, y = num_trips))
+trips_per_day %>% ggplot() + geom_point(aes(x= tmin, y = num_trips))
+trips_per_day %>% ggplot() + geom_point(aes(x= prcp, y = num_trips))
 
-trips_per_day <- trips_train_data
+```
 
-set.seed(42)
+```{r}
 
-num_folds <- 5
-trips_per_day <-  
-  sample_frac(trips_per_day, 1, replace = F) %>%
-  mutate(fold = (row_number()%% 5) + 1)
+#checking a bunch of models and effecto of variables
 
-rmse_train <- c()
-rmse_validate <- c()
-rsq_train <- c()
-rsq_validate <- c()
+model1 <- lm(num_trips ~ poly(tmin, 3, raw = TRUE) + is_weekend + is_holiday, trips_train_data)
+summary(model1)
 
-# all_models_info <- data.frame(
-#                  mean_rmse_train=double(),
-#                  mean_rsq_train=double(),
-#                  se_train = double(), 
-#                  mean_rmse_validate=double(),
-#                  mean_rsq_validate=double(),
-#                  se_validate = double()
-#                  )
-# 
-# form1 = as.formula(num_trips ~ tmax*prcp)
-# form2 = as.formula(num_trips ~ tmin*prcp)
-# all_relevant_forms = list(form1, form2)
+model2 <- lm(num_trips ~ poly(tmin, 3, raw = TRUE) + is_weekend + is_holiday, trips_train_data)
+summary(model2)
 
+model3 <- lm(num_trips ~ poly(tmin, 3, raw = TRUE) + is_weekend + is_holiday + tmax, trips_train_data)
+summary(model3)
 
-for (f in 1:num_folds) {
-    # fit on the training data
-    train_data <- filter(trips_per_day, fold != f)
-    validate_data <- filter(trips_per_day, fold == f)
-    
-    # model
-     model <- lm(num_trips ~ poly(tmin, 3, raw = TRUE) + tmax*prcp + prcp*is_weekend + is_holiday + snow, data=train_data)
+model4 <- lm(num_trips ~ poly(tmin, 3, raw = TRUE) + tmax*prcp + prcp*is_weekend + is_holiday + snow, data=trips_train_data)
+summary(model4)
 
-    # evaluate rmse and rsq
-     rmse_train[f] <- sqrt(mean((predict(model, train_data) - train_data$num_trips)^2))
-    
-    rmse_validate[f] <- sqrt(mean((predict(model, validate_data) - validate_data$num_trips)^2))
-    
-    rsq_train[f] <- rsquare(model, train_data)
-    rsq_validate[f] <- rsquare(model, validate_data)
-}
+#RMSE and RSQ for model 4 with validate data
 
-mean_rmse_train <- mean(rmse_train)
-mean_rmse_validate <- mean(rmse_validate)
+rmse_v <- sqrt(mean((predict(model4, trips_validate_data) - trips_validate_data$num_trips)^2))
+rsq_v <- rsquare(model4, trips_validate_data)
 
-mean_rsq_train <- mean(rsq_train)
-mean_rsq_validate <- mean(rsq_validate)
+rmse_v
+rsq_v
 
-se_train <- sd(rmse_train)/sqrt(num_folds)
-se_validate <- sd(rmse_validate)/sqrt(num_folds)
-
-
-# all_models_info <- all_models_info %>% 
-#   add_row(mean_rmse_train= mean_rmse_train,
-#           mean_rsq_train= mean_rsq_train,
-#           se_train = se_train, 
-#           mean_rmse_validate=mean_rmse_validate,
-#           mean_rsq_validate= mean_rsq_validate,
-#           se_validate = se_validate) %>%
-#   mutate(formula_num = as.factor(row_number()))
-
-mean_rmse_validate
-mean_rsq_validate
-se_validate
-
-trips_per_day <- add_predictions(trips_per_day, model)
 ```
 
 
 ```{r}
-# plot ymd vs num_trips vs pred
-
-trips_per_day %>%
-  ggplot() + 
+trips_train_data %>%
+  add_predictions(model4) %>%
+  ggplot() +
   geom_point(aes(x= ymd, y = num_trips)) + 
   geom_line(aes(x= ymd, y = pred), color = "red") +
   scale_y_continuous(label = comma) +
   labs(x = "Date", y = "Number of Trips")
-
 ```
-
 ```{r}
-# plot actual vs predicted
-trips_per_day %>%
+trips_train_data %>%
+  add_predictions(model4) %>%
   ggplot() + 
   geom_point(aes(x= pred, y = num_trips), color = "red") +
   scale_y_continuous(label = comma) +
   scale_x_continuous(label = comma) + 
   labs(x = "Predicted Number of Trips", y = "Actual Number of Trips")
+```
+
+```{r}
+model4 <- lm(num_trips ~ poly(tmin, 3, raw = TRUE) + tmax*prcp + prcp*is_weekend + is_holiday + snow, data=trips_train_data)
+
+save(model4, file="model.Rdata")
+
 ```
 
