@@ -116,6 +116,29 @@ trips_train_data %>%
 ```
 
 ```{r}
+trips_train_data <- trips_train_data %>%
+  add_predictions(model4) %>% 
+  mutate(data_type = "train")
+trips_test_data <- trips_test_data %>% 
+  add_predictions(model4) %>%
+  mutate(data_type = "test")
+trips_validate_data <- trips_validate_data %>%
+  add_predictions(model4) %>%
+  mutate(data_type = "validate")
+
+all_predictions <- bind_rows(trips_test_data, trips_train_data, trips_validate_data)
+
+all_predictions %>% ggplot(aes(x = ymd, y = num_trips, color = data_type)) +
+  geom_point() +
+  geom_smooth(aes(x = ymd, y = pred))
+
+```
+
+
+
+```{r}
+#saving the best model so far
+
 model4 <- lm(num_trips ~ poly(tmin, 3, raw = TRUE) + tmax*prcp + prcp*is_weekend + is_holiday + snow, data=trips_train_data)
 
 save(model4, file="model.Rdata")
