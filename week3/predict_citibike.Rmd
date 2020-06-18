@@ -58,8 +58,7 @@ trips_per_day %>%
   geom_histogram(bins = 10) +
   scale_x_log10()
 
-                        
-                        
+                      
 trips_per_day %>% ggplot() + geom_point(aes(x= is_weekend, y = num_trips))
 trips_per_day %>% ggplot() + geom_point(aes(x= snow, y = num_trips))
 trips_per_day %>% ggplot() + geom_point(aes(x= tmax, y = num_trips))
@@ -84,7 +83,7 @@ summary(model3)
 model4 <- lm(num_trips ~ poly(tmin, 3, raw = TRUE) + tmax*prcp + prcp*is_weekend + is_holiday + snow, data=trips_train_data)
 summary(model4)
 
-#RMSE and RSQ for model 4 with validate data
+#RMSE and RSQ for model4 with validate data
 
 rmse_v <- sqrt(mean((predict(model4, trips_validate_data) - trips_validate_data$num_trips)^2))
 rsq_v <- rsquare(model4, trips_validate_data)
@@ -96,7 +95,8 @@ rsq_v
 
 
 ```{r}
-trips_train_data %>%
+trips_train_data %>% 
+  filter(ymd != "2014-04-30") %>%
   add_predictions(model4) %>%
   ggplot() +
   geom_point(aes(x= ymd, y = num_trips)) + 
@@ -106,6 +106,7 @@ trips_train_data %>%
 ```
 ```{r}
 trips_train_data %>%
+   filter(ymd != "2014-04-30") %>%
   add_predictions(model4) %>%
   ggplot() + 
   geom_point(aes(x= pred, y = num_trips), color = "red") +

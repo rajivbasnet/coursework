@@ -1,0 +1,75 @@
+---
+title: "test_citibike_predictions"
+output: html_document
+Author: "Rajiv Basnet"
+---
+
+```{r}
+library(tidyverse)
+library(scales)
+library(lubridate)
+
+# be picky about white backgrounds on our plots
+theme_set(theme_bw())
+
+# load RData file output by load_trips.R
+load('trips_2015.RData')
+load('model.RData')
+
+best_model <- model4  #model4 is the best model we had
+
+```
+
+```{r}
+
+#getting complete data for trips 2015
+
+trips_2015 <- trips %>% 
+  group_by(ymd) %>% 
+  summarize(num_trips = n()) %>%
+  left_join(weather, by = "ymd") %>%
+  left_join(holidays, by = "ymd")%>%
+  mutate(is_holiday = (!is.na(holiday_name))) %>%
+  mutate(is_weekend = wday(ymd) == 1 | wday(ymd) == 7) %>%
+  filter(ymd != "2016-01-01") %>%
+  mutate(tmax = tmax/10, tmin = tmin/10)
+
+trips_2015
+
+```
+
+```{r}
+
+# adding predicted values based on our model
+
+trips_2015 <- add_predictions(trips_2015, best_model)
+
+head(trips_2015)
+
+rmse_2015 <- sqrt(mean(predict(best_model, trips_2015) - trips_2015$num_trips)^2)
+rsq_2015 <- rsquare(best_model, trips_2015)
+
+rmse_2015
+rsq_2015
+
+```
+```{r}
+
+#Visualization for the prediction
+trips_2015 %>% ggplot() +
+  geom_point(aes(x = ymd, y = num_trips)) +
+  geom_line(aes(x = ymd, y = pred), color = "red") +
+  labs(x = "Date", y = "Number of Trips")
+
+```
+
+```{r}
+#Visualization for the prediction
+trips_2015 %>% ggplot() +
+  geom_point(aes(x = pred, y = num_trips), color = "red") +
+  labs(x = "Predicted Number of Trips", y = "Actual Number of Trips")
+
+```
+=> It appears that the model worked differently with the 2015 dataset than it did with 2014 dataset. The RMSE is high and thus some of the predictions are far from the true value. Similarly, the R-squared on using the model with this new dataset is 0.72 only and is lower than the expected value. 
+
+Possible suggestions to improve: Using seasons in order to determine the number of trips, it appears (on looking at both the datasets) people are more likely to ride citibike more often during Autumn than on other seasons.
