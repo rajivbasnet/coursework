@@ -170,3 +170,39 @@ trips_test_data %>%add_predictions(model4) %>%
 With the testing set, the RMSE is 3881.972 and R-squared is 0.86.
 The model fits the testing set significantly and is expected to fit pretty well in other datasets as well.
 However, on looking at the plot with the testing set, the plots seem to be rather scattered. Thus, it can also be expected that the RMSE will be higher and the prediction might as well deviate from the true value by a certain amount.
+
+```{r}
+
+#wrangling my test data to match the variables in Krushang's model
+head(trips_test_data)
+
+test_data <- trips_test_data %>%
+  rename(isWeekend = is_weekend, holiday = is_holiday) %>%
+  mutate(isWeekend = as.factor(isWeekend), holiday = as.factor(holiday), weekdays=as.factor(weekdays(ymd))) %>%
+  mutate(isWeekend = ifelse(weekdays=="Saturday"|weekdays=="Sunday", 1, 0)) %>%
+  mutate(holiday = ifelse(is.na(holiday), 0, 1))
+  
+
+
+#testing with Krushang's model
+load("krushang.Rdata")
+
+krushang_model <- model
+summary(krushang_model)
+
+rmse_new_t <- sqrt(mean((predict(krushang_model, test_data) - test_data$num_trips)^2))
+rsq_new_t <- rsquare(krushang_model, test_data)
+
+rmse_new_t
+rsq_new_t
+
+test_data %>% add_predictions(krushang_model) %>%
+  ggplot() + 
+  geom_point(aes(x= pred, y = num_trips), color = "red") +
+  scale_y_continuous(label = comma) +
+  scale_x_continuous(label = comma) + 
+  labs(x = "Predicted Number of Trips", y = "Actual Number of Trips")
+
+```
+
+=> This model fits my test data with an R-squared of 0.78. However, the RMSE is relatively high and some of the num_trips are predicted to be less than zero. 
