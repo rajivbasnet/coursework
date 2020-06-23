@@ -10,7 +10,6 @@ library(dplyr)
 library(modelr)
 library(scales)
 library(lubridate)
-library(quantmod)
 library(stats)
 ```
 
@@ -25,15 +24,15 @@ data
 
 ```{r}
 #our models
-model_baseline <- lm(sales~Lag(sales,1)+Lag(sales,12), data=data)
+model_baseline <- lm(sales~lag(sales,1)+lag(sales,12), data=data)
 summary(model_baseline)
 
-model_with_trends <- lm(sales~Lag(sales,1)+Lag(sales,12) + suvs + insurance, data=data)
+model_with_trends <- lm(sales~lag(sales,1)+lag(sales,12) + suvs + insurance, data=data)
 summary(model_with_trends)
 ```
 
 ```{r}
-#add predictions with both models
+#add predictions with both models (Without Rolling Window)s
 data_with_pred <- data %>%
   add_predictions(model_baseline, var ="base") %>% 
   add_predictions(model_with_trends, var ="trends") %>%
@@ -45,7 +44,7 @@ head(data_with_pred)
 
 
 ```{r}
-#visualizations
+#visualizations (Without Rolling Window)
 
 data_with_pred %>% 
   pivot_longer(c("actual", "base", "trends"), names_to = "sales_type", values_to = "num_of_sales") %>%
@@ -56,13 +55,58 @@ data_with_pred %>%
   labs(x = "Date", y = "Log of Sales")
 ```
 ```{r}
-#MAE calculation
+#MAE calculation (Without Rolling Window)
 
 base_mae <- mae(model_baseline, data)
 trends_mae <- mae(model_with_trends, data)
 
 base_mae
 trends_mae
+
+```
+
+```{r}
+
+#Implementation of Rolling Window
+
+all_data <- data %>% 
+  rename(actual = sales) %>%
+  mutate(baseline = NA, trends = NA) %>%
+  mutate(lag1 = lag(actual, 1), lag12 = lag(actual, 12))
+
+head(all_data)
+
+K <- 17
+num_rows <- nrow(all_data)
+
+
+for (k in K: (num_rows -1) ) {
+  model1 <- lm(actual ~ lag1 + lag12, data = all_data[1:k, ])
+  model2 <- lm(actual ~ lag1 + lag12 + suvs + insurance, data = all_data[1:k, ])
+  all_data$baseline[k + 1] <- predict(model1, all_data[k + 1,])
+  all_data$trends[k + 1] <- predict(model2, all_data[k + 1,])
+}
+
+all_data
+```
+
+```{r}
+all_data %>% 
+  pivot_longer(c("actual", "baseline", "trends"), names_to = "sales_type", values_to = "num_of_sales") %>%
+  ggplot(aes(x = Period, y = num_of_sales, group = sales_type, color = sales_type)) +
+  geom_line(aes(y = num_of_sales, color = sales_type, linetype= sales_type)) +
+  scale_color_manual(values=c("black", "red", "darkgray")) +
+  scale_linetype_manual(values=c("solid", "dashed", "solid")) +
+  labs(x = "Date", y = "Log of Sales")
+```
+```{r}
+#MAE Calculation (With Rolling Window)
+
+mae_baseline <- sum(abs(all_data$actual - all_data$baseline), na.rm = TRUE)/(num_rows - 17)
+mae_trends <- sum(abs(all_data$actual - all_data$trends), na.rm = TRUE)/(num_rows - 17)
+
+mae_baseline
+mae_trends
 
 ```
 

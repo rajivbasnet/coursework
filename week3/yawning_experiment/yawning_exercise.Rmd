@@ -31,38 +31,6 @@ A simulation was conducted to understand the distribution of the test statistic 
 
 ![](mythbusters_simulated_null.png)
 
-```{r}
-# Experiment Check
-estimate_bias <- function(n, p) {
-  mean(rbinom(n,1,p))
-}
-
-observed_diff = 10/34 - 4/16
-
-set.seed(42)
-
-n_treatment <- 34
-p_treatment <- 10/34
-p_hat_treatment <- replicate(1e4, estimate_bias(n_treatment, p_treatment))
-
-n_control <-16
-p_control <- 4/16
-p_hat_control <- replicate(1e4, estimate_bias(n_control, p_control))
-
-plot_data <- data.frame(p_hat_diff= p_hat_treatment - p_hat_control)
-
-ggplot(plot_data, aes(x = p_hat_diff)) +
-  geom_histogram(bins = 15) +
-  geom_vline(xintercept=observed_diff) +
-  geom_vline(xintercept= observed_diff, color="red")  +
-  labs(x = "P_Treatment - P_Control")
-
-num_as_extreme <- sum(plot_data$p_hat_diff >= observed_diff)
-p_value <- num_as_extreme / length(plot_data$p_hat_diff)
-p_value
-
-```
-
 # Part A
 
 Write code that implements this simulation and produces a similar distribution. Functions like `rep`, `sample`, and `replicate` might be useful.
@@ -153,31 +121,22 @@ Now simulate repeating this experiment 1,000 times in a world where yawning is a
 
 ```{r power-calc}
 
-run_experiment <- function(p_treatment, p_control, n, alpha) {
-  na <- sum(rbinom(n, 1, p_treatment))
-  nb <- sum(rbinom(n, 1, p_control))
-  test <- prop.test(x = c(na, nb), n = c(n, n), alternative="two.sided", conf.level = alpha)
-  test$p.value < alpha
+run_experiment <- function(p_treatment, p_control, n_t, n_c, alpha) {
+  na <- rbinom(1, n_t, p_treatment)
+  nb <- rbinom(1, n_c, p_control)
+  na - nb
 }
 
-compute_power <- function(p_treatment, p_control, n, alpha, r = 1000) {
-  mean(replicate(r, run_experiment(p_treatment, p_control, n, alpha)))
-}
-
-n = 50
+n_t = 34
+n_c = 16
 p_treatment <- 10/34
 p_control <- 4/16
 alpha <- 0.05
 
-N <- seq(100,1000, by = 100)
-pow <- c()
-for (n in N) {
-  pow <- c(pow, compute_power(p_treatment, p_control, n, alpha))
-}
-
-ggplot(data.frame(N, pow), aes(x = N, y = pow)) +
-  geom_smooth(color = "gray") +
-  geom_point()
+all_experiments <- replicate(1e3, run_experiment(p_treatment, p_control, n_t, n_c, alpha))
+num_as_extreme <- sum(all_experiments >= 0)
+power <- num_as_extreme/1000
+power
 ```
 
 # Part F
@@ -186,4 +145,4 @@ Imagine you were going to produce another episode on this topic for Mythbusters.
 
 Write up your answer to Part F 
 
-=> In order to observe a significant difference between the treatment and control group, the sample size has to be significantly high. 
+=> In order to observe a significant difference between the treatment and control group, the sample size has to be significantly high.
