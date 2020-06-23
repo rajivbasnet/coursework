@@ -65,7 +65,7 @@ trends_mae
 
 ```
 
-```{r}
+```{r, results="hide"}
 
 #Implementation of Rolling Window
 
@@ -91,6 +91,8 @@ all_data
 ```
 
 ```{r}
+#Visualization (With Rolling Window)
+
 all_data %>% 
   pivot_longer(c("actual", "baseline", "trends"), names_to = "sales_type", values_to = "num_of_sales") %>%
   ggplot(aes(x = Period, y = num_of_sales, group = sales_type, color = sales_type)) +
@@ -109,4 +111,10 @@ mae_baseline
 mae_trends
 
 ```
+
+MAE Baseline is `r mae_baseline`
+and MAE With Trends is `r mae_trends`
+
+The graph and MAE's match excatly as in the paper. 
+Thus, it is reproducible.
 
