@@ -1,0 +1,68 @@
+---
+title: "Replication of Predicting the Present with Google Trends"
+output: html_document
+Author: Rajiv Basnet
+---
+
+```{r, results='hide', message=FALSE}
+library(tidyverse)
+library(dplyr)
+library(modelr)
+library(scales)
+library(lubridate)
+library(quantmod)
+library(stats)
+```
+
+```{r, results="hide"}
+set.seed(42)
+
+data <- read.csv("Autos/Autos/merged.csv") %>% mutate(Period = as.Date(Period))
+data <- data %>% mutate(sales = log(sales))
+data
+
+```
+
+```{r}
+#our models
+model_baseline <- lm(sales~Lag(sales,1)+Lag(sales,12), data=data)
+summary(model_baseline)
+
+model_with_trends <- lm(sales~Lag(sales,1)+Lag(sales,12) + suvs + insurance, data=data)
+summary(model_with_trends)
+```
+
+```{r}
+#add predictions with both models
+data_with_pred <- data %>%
+  add_predictions(model_baseline, var ="base") %>% 
+  add_predictions(model_with_trends, var ="trends") %>%
+  filter(Period >= as.Date('2005-06-01')) %>%
+  rename(actual = sales)
+
+head(data_with_pred)
+```
+
+
+```{r}
+#visualizations
+
+data_with_pred %>% 
+  pivot_longer(c("actual", "base", "trends"), names_to = "sales_type", values_to = "num_of_sales") %>%
+  ggplot(aes(x = Period, y = num_of_sales, group = sales_type, color = sales_type)) +
+  geom_line(aes(y = num_of_sales, color = sales_type, linetype= sales_type)) +
+  scale_color_manual(values=c("black", "red", "darkgray")) +
+  scale_linetype_manual(values=c("solid", "dashed", "solid")) +
+  labs(x = "Date", y = "Log of Sales")
+```
+```{r}
+#MAE calculation
+
+base_mae <- mae(model_baseline, data)
+trends_mae <- mae(model_with_trends, data)
+
+base_mae
+trends_mae
+
+```
+
